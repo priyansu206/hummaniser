@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Humanizer</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+        textarea { width: 100%; height: 150px; margin-bottom: 10px; padding: 10px; }
+        button { padding: 10px 20px; cursor: pointer; background: #000; color: #fff; border: none; }
+        #output { margin-top: 20px; padding: 15px; background: #f4f4f4; border-radius: 5px; min-height: 50px;}
+    </style>
+</head>
+<body>
+
+    <h2>Text Humanizer</h2>
+    <p>Paste your robotic AI text below:</p>
+    
+    <textarea id="inputText" placeholder="Enter text here..."></textarea>
+    <button onclick="humanize()">Humanize Text</button>
+
+    <div id="output">Your humanized text will appear here...</div>
+
+    <script>
+        async function humanize() {
+            const text = document.getElementById('inputText').value;
+            const outputDiv = document.getElementById('output');
+            outputDiv.innerText = "Thinking...";
+
+            const response = await fetch('/api/humanize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            });
+
+            const data = await response.json();
+            outputDiv.innerText = data.humanized_text || "An error occurred.";
+        }
+    </script>
+</body>
+</html>
