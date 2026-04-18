@@ -5,20 +5,16 @@ import urllib.request
 import urllib.error
 import json
 import os
-
 app = FastAPI()
-
 class TextInput(BaseModel):
     text: str
-
-# Neo-Brutalist UI with Floating Side Elements & Fluid Typing
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Humanizer | Neo-Brutalist</title>
+    <title>Humanizer</title>
     <style>
         :root {
             --bg-color: #f7f3e9; 
@@ -46,8 +42,6 @@ HTML_TEMPLATE = """
             position: relative;
             overflow-x: hidden;
         }
-        
-        /* Floating Side Elements */
         .deco {
             position: fixed;
             border: 4px solid var(--border-color);
@@ -186,22 +180,17 @@ HTML_TEMPLATE = """
     </style>
 </head>
 <body>
-
     <div class="deco deco-1">TXT</div>
     <div class="deco deco-2">SYS_</div>
     <div class="deco deco-3">★</div>
     <div class="deco deco-4">" "</div>
-
     <div class="container">
-        <h2>AI Humanizer</h2>
-        <p>DROP YOUR ROBOTIC TEXT BELOW.</p>
-        
+        <h2>Humanizer</h2>
+        <p>DROP YOUR TEXT BELOW.</p>       
         <textarea id="inputText" placeholder="Paste text here..."></textarea>
         <button id="actionBtn" onclick="humanize()">HUMANIZE TEXT</button>
-
         <div id="output"></div>
     </div>
-
     <script>
         // Fluid Typewriter Function
         async function typeWriter(text, element, speed = 15) {
@@ -212,19 +201,15 @@ HTML_TEMPLATE = """
                 await new Promise(resolve => setTimeout(resolve, speed));
             }
         }
-
         async function humanize() {
             const text = document.getElementById('inputText').value;
             if (!text.trim()) return;
-
             const outputDiv = document.getElementById('output');
             const btn = document.getElementById('actionBtn');
-            
             outputDiv.style.display = 'block';
             outputDiv.innerHTML = '<span class="thinking">PROCESSING...</span>';
             btn.disabled = true;
             btn.innerText = "WORKING...";
-
             try {
                 const response = await fetch('/humanize', {
                     method: 'POST',
@@ -239,8 +224,7 @@ HTML_TEMPLATE = """
                     await typeWriter(data.humanized_text, outputDiv, 15);
                 } else {
                     outputDiv.innerText = data.humanized_text || "An error occurred.";
-                }
-                
+                } 
             } catch (err) {
                 outputDiv.innerText = "ERROR: CONNECTION FAILED.";
             } finally {
