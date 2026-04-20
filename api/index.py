@@ -192,14 +192,25 @@ HTML_TEMPLATE = """
         <div id="output"></div>
     </div>
     <script>
-        // Fluid Typewriter Function
-        async function typeWriter(text, element, speed = 15) {
-            element.innerHTML = '';
-            for (let i = 0; i < text.length; i++) {
-                element.innerHTML += text.charAt(i);
-                // Wait for 'speed' milliseconds before typing the next character
-                await new Promise(resolve => setTimeout(resolve, speed));
-            }
+    // Fluid & Fast Typewriter Function
+        function typeWriter(text, element) {
+            return new Promise(resolve => {
+                element.innerHTML = '';
+                let i = 0;
+                const charsPerFrame = 12;
+                function type() {
+                    if (i < text.length) {
+                        // Append a chunk of characters instead of just one
+                        element.innerHTML += text.substring(i, i + charsPerFrame);
+                        i += charsPerFrame;
+                        // Use the browser's native refresh rate for smooth rendering
+                        requestAnimationFrame(type);
+                    } else {
+                        resolve(); // Let the humanize() function know we are done
+                    }
+                }
+                requestAnimationFrame(type);
+            });
         }
         async function humanize() {
             const text = document.getElementById('inputText').value;
@@ -221,7 +232,7 @@ HTML_TEMPLATE = """
                 
                 if (data.humanized_text && !data.humanized_text.startsWith("Error")) {
                     // Call the fluid typing effect
-                    await typeWriter(data.humanized_text, outputDiv, 15);
+                    await typeWriter(data.humanized_text, outputDiv);
                 } else {
                     outputDiv.innerText = data.humanized_text || "An error occurred.";
                 } 
@@ -236,37 +247,31 @@ HTML_TEMPLATE = """
 </body>
 </html>
 """
-
 @app.get("/")
 def serve_home():
     return HTMLResponse(content=HTML_TEMPLATE)
-
 @app.post("/humanize")
 def humanize_text(data: TextInput):
-    api_key = os.environ.get("GROQ_API_KEY", "").strip() 
-    
+    api_key = os.environ.get("GROQ_API_KEY", "").strip()
     if not api_key:
         return {"humanized_text": "Error: Vercel cannot find the GROQ_API_KEY. Did you add it to Vercel Environment Variables?"}
-    
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    
+    url = "https://api.groq.com/openai/v1/chat/completions" 
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-    }
-    
-    system_prompt = """You are a highly creative, slightly erratic human writer. Your only goal is to bypass AI detection algorithms (like ZeroGPT).
-    Rules to break the mathematical signature of AI:
-    1. Subjective Framing: Use phrases like "Honestly," "I think," "To be fair," or "Look." AI rarely does this naturally.
-    2. Imperfect Flow: Start sentences with conjunctions (And, But, Or, Because). Use run-on sentences occasionally. 
-    3. Idiomatic Language: Use common human idioms and figures of speech.
-    4. Banned Vocabulary: NO words like delve, testament, tapestry, realm, moreover, intricate, crucial, or multifaceted.
-    5. Structural Chaos: Drastically mix 2-word sentences with 40-word wandering sentences. 
-    Output ONLY the rewritten text. No intros, no quotes around the output."""
-
+    } 
+    system_prompt = """You are an expert human writer and editor. Your only goal is to rewrite the text to bypass AI detection while keeping the exact original length and narrative structure.
+    Rules:
+    1. ZERO Summarization: Do NOT shorten the text. You must maintain the exact same word count, paragraph count, and level of detail as the original. If anything, make it slightly longer.
+    2. Preserve Story Formatting: Strictly keep existing commas, dialogue quotes, and punctuation layouts. Do not alter the core narrative beats of a story.
+    3. Imperfect Flow: Start sentences with conjunctions (And, But, Or, Because) to sound naturally written.
+    4. Casual & Idiomatic: Use human idioms and everyday phrasing. Replace robotic tone with gritty, human reality.
+    5. Banned Vocabulary: NEVER use words like delve, testament, tapestry, realm, moreover, intricate, crucial, or multifaceted.
+    6. Structural Burstiness: Drastically mix short, punchy sentences with longer, flowing ones.
+    Output ONLY the rewritten text. No intros, no explanations, no quotes around the final output."""
     payload = {
-        "model": "llama-3.3-70b-versatile", 
+        "model": "qwen/qwen3-32b", 
         "messages": [
             {
                 "role": "system",
@@ -277,8 +282,7 @@ def humanize_text(data: TextInput):
                 "content": data.text
             }
         ]
-    }
-    
+    } 
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
         with urllib.request.urlopen(req, timeout=60) as response:
